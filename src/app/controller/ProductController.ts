@@ -1,8 +1,12 @@
 import {Request, Response} from "express";
-import Product from "../models/schema/ProductSchema";
+import Product, {Rating} from "../models/ProductSchema";
 import {sendError, sendResponse} from "../../utils/responseResult";
 import {validateDbId} from "../../utils/dbValidation";
 import slugify from "slugify";
+import {AuthenticatedRequest} from "../middlewares/auth";
+import User from "../models/UserSchema";
+import {Types} from "mongoose";
+import {uploadImages} from "../../services/fileUploadService";
 
 // const create = asyncHandler(async (req: Request, res: Response) => {
 //
@@ -13,7 +17,9 @@ export class ProductController {
         try {
             if (req.body.title) {
                 req.body.slug = slugify(req.body.title);
+
             }
+            await uploadImages(req.body.images)
             const product: Product = await Product.create(req.body);
 
             sendResponse(res, product, "Product created.", 201);
@@ -63,7 +69,7 @@ export class ProductController {
             const skip: number = (Number(page) - 1) * Number(limit);
             productQuery = productQuery.skip(skip).limit(limit)
 
-            if(req.query.page){
+            if (req.query.page) {
                 const productCount: number = await Product.countDocuments();
                 if (skip >= productCount) throw new Error("Page not found.")
 
@@ -104,6 +110,83 @@ export class ProductController {
             sendResponse(res, null, `Product ${req.params.id} deleted.`);
         } catch (err) {
             sendError(res, err, err.message)
+        }
+    }
+
+    public async addToWishlist(req: AuthenticatedRequest, res: Response) {
+        try {
+            const id: string = req.user?.id;
+            const productId: string = req.body.product_id;
+            validateDbId(productId);
+            let user: User = await User.findById(id) as User;
+            const alreadyAdded: boolean = user.wishlist.find(
+                (id: Types.ObjectId): boolean => id.toString() === productId.toString()
+            ) != undefined
+
+            let message: string;
+            if (alreadyAdded) {
+                await user.updateOne({$pull: {wishlist: productId}});
+                message = `Product ${productId} removed from wishlist.`;
+            } else {
+                await user.updateOne({$push: {wishlist: productId}});
+                message = `Product ${productId} added to wishlist.`;
+            }
+            await user.save();
+
+            return sendResponse(res, null, message);
+        } catch (err) {
+            return sendError(res, err, err.message);
+        }
+    }
+
+    public async getAllReviews(req: Request, res: Response) {
+        try {
+            const productId: string = req.body.productId;
+            // console.log(productId)
+            validateDbId(productId);
+            const product: Product | null = await Product.findById(productId);
+            if (!product) {
+                throw new Error(`Product ${productId} not found.`);
+            }
+
+            const ratings = product.ratings;
+
+            return sendResponse(res, ratings, `Product ${productId} reviews.`, 201);
+        } catch (err) {
+            return sendError(res, err, err.message);
+        }
+    }
+    public async addReview(req: AuthenticatedRequest, res: Response) {
+        try {
+            const userId: string = req.user?.id;
+            const {star, review, productId} = req.body;
+            validateDbId(productId);
+            const product: Product | null = await Product.findById(productId);
+            if (!product) {
+                throw new Error(`Product ${productId} not found.`);
+            }
+            let alreadyRated: Rating | undefined = await product.ratings.find((rating: Rating): boolean =>
+                rating.posted_by?.equals(userId));
+
+            if (alreadyRated) {
+                alreadyRated.star = star;
+                alreadyRated.review = review;
+                await product.save();
+            } else {
+                product.ratings.push({
+                    star: star,
+                    review: review,
+                    posted_by: new Types.ObjectId(userId)
+                });
+                await product.save();
+            }
+
+            product.average_rating = product.calculateAverageRating();
+            await product.save();
+
+            return sendResponse(res, null, `Product ${productId} reviewed.`, 201);
+        } catch (err) {
+            return sendError(res, err, err.message);
         }
     }
 }

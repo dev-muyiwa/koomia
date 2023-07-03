@@ -1,6 +1,18 @@
-import mongoose, {Model, Schema, Types} from "mongoose";
-import {Blog} from "../interface/Blog";
-import {Role} from "../interface/User";
+import mongoose, {Document, Model, Schema, Types} from "mongoose";
+import {Role} from "./UserSchema";
+
+interface Blog extends Document {
+    title: string,
+    description: string,
+    category: string,
+    view_count: number,
+    is_liked: boolean,
+    is_disliked: boolean,
+    likes: [Types.ObjectId],
+    dislikes: [Types.ObjectId],
+    image: string,
+    author: string
+}
 
 let blogSchema: Schema<Blog> = new Schema({
     title: {

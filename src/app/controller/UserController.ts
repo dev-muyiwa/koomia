@@ -1,5 +1,5 @@
 import {Request, Response} from "express";
-import User from "../models/schema/UserSchema";
+import User from "../models/UserSchema";
 import {generateRefreshToken, generateAccessToken} from "../../config/jwt";
 import {AuthenticatedRequest} from "../middlewares/auth";
 import {validateDbId} from "../../utils/dbValidation";

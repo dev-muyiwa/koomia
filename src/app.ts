@@ -8,12 +8,14 @@ import authRoute from "./app/routes/AuthRoute";
 import {errorHandler, routeNotFound} from "./app/middlewares/errorHandler";
 import productRoute from "./app/routes/ProductRoute";
 import blogRoute from "./app/routes/BlogRoute";
+import categoryRoute from "./app/routes/CategoryRoute";
 
 dotenv.config();
 
 const app: Application = express();
 
 databaseConfig()
+
 
 app.use(morgan("dev"))
 app.use(express.json());
@@ -23,6 +25,7 @@ app.use(cookieParser());
 app.use("/api/v1/user", authRoute);
 app.use("/api/v1/product", productRoute);
 app.use("/api/v1/blog", blogRoute);
+app.use("/api/v1/category", categoryRoute);
 
 app.use(routeNotFound);
 app.use(errorHandler);

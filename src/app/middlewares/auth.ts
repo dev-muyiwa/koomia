@@ -1,9 +1,7 @@
 import jwt, {JwtPayload} from "jsonwebtoken";
 import {NextFunction, Request, Response} from "express";
 import * as process from "process";
-import User from "../models/schema/UserSchema";
-import {Auth} from "typeorm";
-import {Role} from "../models/interface/User";
+import User, {Role} from "../models/UserSchema";
 
 
 export interface AuthenticatedRequest extends Request {
@@ -22,9 +20,8 @@ export const validateBearerToken = async (req: AuthenticatedRequest, res: Respon
         }
         const decodedJwt: JwtPayload = jwt.verify(token, process.env.JWT_SECRET || "") as JwtPayload;
         const user: User | null = await User.findById(decodedJwt?.id)
-        console.log(decodedJwt)
         if (!user) {
-            throw new Error(`User not found (a).`);
+            throw new Error(`User not found.`);
         }
         req.user = user;
         return next()
