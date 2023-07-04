@@ -1,20 +1,21 @@
 import express, {Router} from "express";
 import {ProductController} from "../controller/ProductController";
-import {validateBearerToken, verifyAdminRole} from "../middlewares/auth";
+import {uploads, validateBearerToken, verifyAdminRole} from "../middlewares/auth";
 
 const router: Router = express.Router();
 const productController: ProductController = new ProductController();
 
 router.get("/", productController.getAllProducts);
-router.get("/:id", productController.getSingleProduct);
-router.put("/wishlist", validateBearerToken, productController.addToWishlist);
+router.post("/",
+    validateBearerToken, verifyAdminRole, uploads.array("images"), productController.createProduct);
 
-router.get("/reviews", validateBearerToken, productController.getAllReviews);
-router.post("/reviews/new", validateBearerToken, productController.addReview);
-// Admin routes.
-router.post("/", validateBearerToken, verifyAdminRole, productController.createProduct);
-router.put("/:id", validateBearerToken, verifyAdminRole, productController.updateProduct);
-router.delete("/:id", validateBearerToken, verifyAdminRole, productController.deleteProduct);
+router.use(validateBearerToken)
+    .get("/:id", productController.getSingleProduct)
+    .put("/:id", verifyAdminRole, productController.updateProduct)
+    .delete("/:id", verifyAdminRole, productController.deleteProduct)
+    .put("/:id/wishlist", validateBearerToken, productController.addToWishlist)
+    .get("/:id/reviews", validateBearerToken, productController.getAllReviews)
+    .post("/:id/reviews/new", validateBearerToken, productController.addReview);
 
 
 export default router;

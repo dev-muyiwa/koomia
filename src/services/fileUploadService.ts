@@ -9,23 +9,44 @@ cloudinary.config({
     secure: true
 });
 
-const uploadImages = async (images: string[]): Promise<object[]> => {
+export interface ImageResponse {
+    public_id: string,
+    secure_url: string,
+}
+
+const uploadImages = async (images: string[], productId: string): Promise<ImageResponse[]> => {
+    cloudinary.config({
+        cloud_name: process.env.CLOUDINARY_NAME,
+        api_key: process.env.CLOUDINARY_KEY,
+        api_secret: process.env.CLOUDINARY_SECRET,
+        secure: true
+    });
     try {
-        const options: UploadApiOptions = {overwrite: true};
+        const options: UploadApiOptions = {
+            folder: `products/${productId}`,
+            use_filename: true
+        };
 
-        // if (publicId) {
-        //     options["public_id"] = publicId;
-        // }
+        // const uploadPromises = images.forEach(async (image: string,index: number) => {
+        //     options["filename_override"] = `product ${index}`
+        //     const result: UploadApiResponse = await cloudinary.uploader.upload(image, options);
+        //
+        //     return {
+        //         public_id: result.public_id,
+        //         secure_url: result.secure_url,
+        //     }
+        // })
 
-        const uploadPromises = images.map(async (image) => {
+        const uploadPromises: Promise<ImageResponse>[] = images.map(async (image:string, index:number) => {
             // if (publicId) {
             //     options["public_id"] = publicId;
             // }
+            options["filename_override"] = `product ${index}`
             const result: UploadApiResponse = await cloudinary.uploader.upload(image, options);
             return {
                 public_id: result.public_id,
-                secure_url: result.secure_url
-            }
+                secure_url: result.secure_url,
+            } as ImageResponse
         })
         return await Promise.all(uploadPromises);
     } catch (error) {

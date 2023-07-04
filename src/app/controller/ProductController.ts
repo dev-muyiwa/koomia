@@ -6,7 +6,7 @@ import slugify from "slugify";
 import {AuthenticatedRequest} from "../middlewares/auth";
 import User from "../models/UserSchema";
 import {Types} from "mongoose";
-import {uploadImages} from "../../services/fileUploadService";
+import {ImageResponse, uploadImages} from "../../services/fileUploadService";
 
 // const create = asyncHandler(async (req: Request, res: Response) => {
 //
@@ -17,10 +17,19 @@ export class ProductController {
         try {
             if (req.body.title) {
                 req.body.slug = slugify(req.body.title);
-
             }
-            await uploadImages(req.body.images)
+            if (!req.files || req.files.length ==0){
+                throw new Error("No files found.");
+            }
+            console.log("Files are ", req.files)
+
+            const imagePath: string[] = (req.files as Express.Multer.File[]).map(file => file.path);
+            console.log(imagePath);
             const product: Product = await Product.create(req.body);
+            const files: ImageResponse[] = await uploadImages(imagePath, product.id);
+            files.forEach(file => {
+                product.images.push(file)
+            })
 
             sendResponse(res, product, "Product created.", 201);
         } catch (err) {
@@ -116,7 +125,7 @@ export class ProductController {
     public async addToWishlist(req: AuthenticatedRequest, res: Response) {
         try {
             const id: string = req.user?.id;
-            const productId: string = req.body.product_id;
+            const productId: string = req.params.id;
             validateDbId(productId);
             let user: User = await User.findById(id) as User;
             const alreadyAdded: boolean = user.wishlist.find(
@@ -141,8 +150,8 @@ export class ProductController {
 
     public async getAllReviews(req: Request, res: Response) {
         try {
-            const productId: string = req.body.productId;
-            // console.log(productId)
+            const productId: string = req.params.id;
+            // console.log(`Product Id = ${productId}`)
             validateDbId(productId);
             const product: Product | null = await Product.findById(productId);
             if (!product) {
@@ -159,7 +168,8 @@ export class ProductController {
     public async addReview(req: AuthenticatedRequest, res: Response) {
         try {
             const userId: string = req.user?.id;
-            const {star, review, productId} = req.body;
+            const productId: string = req.params.id;
+            const {star, review} = req.body;
             validateDbId(productId);
             const product: Product | null = await Product.findById(productId);
             if (!product) {
@@ -181,7 +191,7 @@ export class ProductController {
                 await product.save();
             }
 
-            product.average_rating = product.calculateAverageRating();
+            // product.average_rating = product.calculateAverageRating();
             await product.save();
 
             return sendResponse(res, null, `Product ${productId} reviewed.`, 201);

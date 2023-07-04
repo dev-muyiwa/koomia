@@ -1,4 +1,5 @@
 import mongoose, {Document, Model, Schema, Types} from "mongoose";
+import {ImageResponse} from "../../services/fileUploadService";
 
 export interface Rating {
     star: number;
@@ -15,7 +16,7 @@ interface Product extends Document {
     brand: string;
     quantity?: number;
     sold: number;
-    images: string[];
+    images: ImageResponse[];
     color: string;
     ratings: Rating[];
     average_rating: number;
@@ -59,9 +60,10 @@ let productSchema: Schema<Product> = new Schema({
         default: 0,
         // select: false
     },
-    images: {
-        type: [String]
-    },
+    images: [{
+        public_id: String,
+        secure_url: String
+    }],
     color: {
         type: String,
         required: true
@@ -78,6 +80,20 @@ let productSchema: Schema<Product> = new Schema({
         type: Number,
     }
 }, {timestamps: true, versionKey: false});
+
+productSchema.pre<Product>('save', function (next) {
+    const ratings: Rating[] = this.ratings;
+    let totalRating: number = 0;
+
+    if (ratings.length > 0) {
+        totalRating = ratings.reduce((sum: number, rating: Rating) => sum + rating.star, 0);
+        this.average_rating = Number((totalRating / ratings.length).toFixed(2));
+    } else {
+        this.average_rating = 0;
+    }
+
+    next();
+});
 
 productSchema.methods.calculateAverageRating = function(): number  {
     let noOfReviews: number = (this.ratings.length === 0) ? 1 : this.ratings.length ;

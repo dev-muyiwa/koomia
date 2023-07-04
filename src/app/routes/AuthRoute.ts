@@ -7,19 +7,20 @@ const userController: UserController = new UserController();
 
 router.post("/register", userController.registerUser);
 router.post("/login", userController.loginUser);
-router.get("/:id", userController.getSingleUser);
 router.get("/all-users", userController.getAllUsers);
-
 router.put("/edit", validateBearerToken, userController.updateUser);
+
 router.put("/update-password", validateBearerToken, userController.updatePassword);
 router.post("/forgot-password", userController.forgotPassword);
 router.put("/reset-password/:token", userController.resetPassword);
 router.delete("/delete", validateBearerToken, userController.deleteUser);
 router.get("/refresh", userController.handleRefreshToken);
-router.post("/logout", userController.logoutUser)
+router.post("/logout", userController.logoutUser);
 
-// Admin routes.
 router.post("/block-user/:id", validateBearerToken, verifyAdminRole, userController.blockUser)
 router.post("/unblock-user/:id", validateBearerToken, verifyAdminRole, userController.unblockUser)
+
+
+router.get("/:id", userController.getSingleUser);
 
 export default router;

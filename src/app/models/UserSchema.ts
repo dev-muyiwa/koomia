@@ -19,7 +19,7 @@ interface User extends Document {
     address: Types.ObjectId[];
     wishlist: Types.ObjectId[];
     refresh_token?: string;
-    password_updated_at: Date;
+    password_updated_at: string;
     password_reset_token?: string;
     password_token_expiration?: string
 
@@ -76,7 +76,7 @@ let userSchema: Schema<User> = new Schema({
         default: null
     },
     password_updated_at: {
-        type: Date,
+        type: String,
         default: null
     },
     password_reset_token: {

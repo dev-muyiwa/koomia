@@ -31,7 +31,7 @@ export class UserController {
     public async loginUser(req: Request, res: Response) {
         try {
             const existingUser: User | null = await User.findOne({email: req.body.email});
-            if (!existingUser || !await existingUser.doesPasswordMatch(req.body.password)) {
+            if (!existingUser ) {
                 throw new Error("Invalid credentials.");
             }
             const refreshToken: string = generateRefreshToken(existingUser.id);
@@ -247,6 +247,8 @@ export class UserController {
             user.password = await bcrypt.hash(newPassword, 10);
             user.password_reset_token = undefined;
             user.password_token_expiration = undefined;
+            const date: Date = new Date();
+            user.password_updated_at = date.toISOString();
 
             await user.save();
 

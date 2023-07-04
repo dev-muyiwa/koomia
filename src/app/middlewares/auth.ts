@@ -2,6 +2,7 @@ import jwt, {JwtPayload} from "jsonwebtoken";
 import {NextFunction, Request, Response} from "express";
 import * as process from "process";
 import User, {Role} from "../models/UserSchema";
+import multer, {Multer} from "multer";
 
 
 export interface AuthenticatedRequest extends Request {
@@ -34,7 +35,7 @@ export const verifyAdminRole = async (req: AuthenticatedRequest, res: Response, 
     try {
         const user: User | null = await User.findById(req.user?._id);
         if (!user) {
-            throw new Error("User not found (b).");
+            throw new Error("User not found.");
         }
         if (user.role !== Role.ADMIN) {
             throw new Error("Resource is restricted to admins alone.");
@@ -44,3 +45,19 @@ export const verifyAdminRole = async (req: AuthenticatedRequest, res: Response, 
         return res.status(500).json({success: false, message: err.message});
     }
 }
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        // Specify the directory where you want to save the uploaded files
+        cb(null, 'uploads/');
+    },
+    filename: function (req, file, cb) {
+        // Use the original file name or generate a unique name
+        cb(null, file.originalname);
+    }
+});
+
+export const uploads = multer({
+    storage: multer.diskStorage({}),
+    limits: {fileSize: 5000000000}
+})
