@@ -15,9 +15,7 @@ interface User extends Document {
     role: Role;
     is_blocked: boolean;
     password: string;
-    cart: Types.ObjectId[];
     address: Types.ObjectId[];
-    wishlist: Types.ObjectId[];
     refresh_token?: string;
     password_updated_at: string;
     password_reset_token?: string;
@@ -59,17 +57,9 @@ let userSchema: Schema<User> = new Schema({
         type: String,
         required: true
     },
-    cart: {
-        type: [Types.ObjectId],
-        default: []
-    },
     address: [{
         type: Types.ObjectId,
         ref: "Address"
-    }],
-    wishlist: [{
-        type: Types.ObjectId,
-        ref: "Product"
     }],
     refresh_token: {
         type: String,
@@ -89,7 +79,7 @@ let userSchema: Schema<User> = new Schema({
     }
 }, {
     versionKey: false,
-    timestamps: true
+    timestamps: true,
 });
 
 userSchema.pre<User>("save", async function (next) {

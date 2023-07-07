@@ -1,19 +1,13 @@
 import {NextFunction, Request, Response} from "express";
-import {sendError} from "../../utils/responseResult";
+import {CustomError, handleResponseErrors} from "../../utils/responseResult";
 
 export const routeNotFound = (req: Request, res: Response, next: NextFunction) => {
-    const error: Error = new Error(`Not found: ${req.originalUrl}`);
+    const error = new CustomError(`Not found: ${req.originalUrl}`, CustomError.NOT_FOUND);
     res.status(404);
     next(error);
 }
 
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
-    const statusCode: number = res.statusCode == 200 ? 500 : res.statusCode;
-    sendError(res, err, err.message, statusCode);
-    // res.status(statusCode)
-    //     .json({
-    //         success: false,
-    //         message: err.message,
-    //         error: err.stack
-    //     });
+    // const statusCode: number = res.statusCode == 200 ? 500 : res.statusCode;
+    handleResponseErrors(res, err);
 }

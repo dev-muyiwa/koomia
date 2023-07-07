@@ -9,6 +9,7 @@ import {errorHandler, routeNotFound} from "./app/middlewares/errorHandler";
 import productRoute from "./app/routes/ProductRoute";
 import blogRoute from "./app/routes/BlogRoute";
 import categoryRoute from "./app/routes/CategoryRoute";
+import userRoute from "./app/routes/UserRoute";
 
 dotenv.config();
 
@@ -19,11 +20,12 @@ databaseConfig()
 
 app.use(morgan("dev"))
 app.use(express.json());
-app.use(express.static("public"));
 app.use(express.urlencoded({extended: true}));
+app.use(express.static("public"));
 app.use(cookieParser());
 
-app.use("/api/v1/user", authRoute);
+app.use("/api/v1/auth", authRoute);
+app.use("/api/v1/user", userRoute);
 app.use("/api/v1/product", productRoute);
 app.use("/api/v1/blog", blogRoute);
 app.use("/api/v1/category", categoryRoute);

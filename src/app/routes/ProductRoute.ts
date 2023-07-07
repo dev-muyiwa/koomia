@@ -1,21 +1,24 @@
 import express, {Router} from "express";
-import {ProductController} from "../controller/ProductController";
+import {productController} from "../controller/ProductController";
 import {uploads, validateBearerToken, verifyAdminRole} from "../middlewares/auth";
 
-const router: Router = express.Router();
-const productController: ProductController = new ProductController();
 
-router.get("/", productController.getAllProducts);
-router.post("/",
+
+
+
+const router: Router = express.Router();
+
+router.post("/new",
     validateBearerToken, verifyAdminRole, uploads.array("images"), productController.createProduct);
 
-router.use(validateBearerToken)
+router.get("/all", productController.getAllProducts)
     .get("/:id", productController.getSingleProduct)
-    .put("/:id", verifyAdminRole, productController.updateProduct)
+    .get("/:id/reviews",  productController.getAllReviews)
+    .use(validateBearerToken)
+    .post("/:id", verifyAdminRole, productController.updateProduct)
     .delete("/:id", verifyAdminRole, productController.deleteProduct)
-    .put("/:id/wishlist", validateBearerToken, productController.addToWishlist)
-    .get("/:id/reviews", validateBearerToken, productController.getAllReviews)
-    .post("/:id/reviews/new", validateBearerToken, productController.addReview);
-
+    .post("/:id/wishlist/new", productController.addOrDeleteFromWishlist)
+    .post("/:id/cart/new", productController.addOrRemoveFromCart)
+    .post("/:id/reviews/new", productController.addReview);
 
 export default router;

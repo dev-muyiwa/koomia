@@ -1,26 +1,14 @@
 import express, {Router} from "express";
-import {UserController} from "../controller/UserController";
-import {validateBearerToken, verifyAdminRole} from "../middlewares/auth";
+import {authController} from "../controller/AuthController";
+import {validateBearerToken} from "../middlewares/auth";
 
 const router: Router = express.Router();
-const userController: UserController = new UserController();
 
-router.post("/register", userController.registerUser);
-router.post("/login", userController.loginUser);
-router.get("/all-users", userController.getAllUsers);
-router.put("/edit", validateBearerToken, userController.updateUser);
-
-router.put("/update-password", validateBearerToken, userController.updatePassword);
-router.post("/forgot-password", userController.forgotPassword);
-router.put("/reset-password/:token", userController.resetPassword);
-router.delete("/delete", validateBearerToken, userController.deleteUser);
-router.get("/refresh", userController.handleRefreshToken);
-router.post("/logout", userController.logoutUser);
-
-router.post("/block-user/:id", validateBearerToken, verifyAdminRole, userController.blockUser)
-router.post("/unblock-user/:id", validateBearerToken, verifyAdminRole, userController.unblockUser)
-
-
-router.get("/:id", userController.getSingleUser);
+router.post("/register", authController.registerUser);
+router.post("/login", authController.loginUser);
+router.post("/forgot-password", authController.forgotPassword);
+router.put("/reset-password/:token", authController.resetPassword);
+router.get("/refresh", validateBearerToken, authController.handleRefreshToken);
+router.post("/logout", validateBearerToken, authController.logoutUser);
 
 export default router;

@@ -1,30 +1,38 @@
-import mongoose, {Schema, Document, Model} from "mongoose";
+import mongoose, {Schema, Document, Model, Types} from "mongoose";
 
-interface Cart extends Document {
-    products: Schema.Types.ObjectId[];
-    total_count: number;
-    total_price: number;
-    order_by: Schema.Types.ObjectId;
+
+interface CartItem {
+    product: Types.ObjectId,
+    quantity: number
 }
 
-const cartSchema: Schema<Cart> = new Schema<Cart>({
+interface Cart extends Document {
+    products: CartItem[];
+    total_price: number;
+    order_by: Types.ObjectId;
+}
+
+let cartSchema: Schema<Cart> = new Schema<Cart>({
     products: [{
-        type: Schema.Types.ObjectId,
-        ref: "Product"
+        product: {
+            type: Types.ObjectId,
+            ref: "Product"
+        },
+        quantity: Number
     }],
-    total_count: {
-        type: Number,
-        default: 0
-    },
-    total_price: {
-        type: Number,
-        default: 0
-    },
+    total_price: Number,
     order_by: {
         type: Schema.Types.ObjectId,
         ref: "User"
     },
 }, {timestamps: true, versionKey: false});
+
+// Create a hook that checks if the amount is 0 and removes that product form the database.
+// Create a hook that calculates the total price of items.
+cartSchema.pre<Cart>("save", async function (next) {
+    const total_count = this.products.length;
+    // this.total_price = this.products.map()
+});
 
 
 const Cart: Model<Cart> = mongoose.model<Cart>("Cart", cartSchema);
