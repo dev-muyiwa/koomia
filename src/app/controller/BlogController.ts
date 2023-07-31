@@ -1,5 +1,5 @@
 import {Request, Response} from "express";
-import {CustomError, handleResponseErrors, sendResponse} from "../../utils/responseResult";
+import {CustomError, errorHandler, responseHandler} from "../../utils/responseResult";
 import Blog from "../models/BlogSchema";
 import {validateDbId} from "../../utils/dbValidation";
 import {AuthenticatedRequest} from "../middlewares/auth";
@@ -9,9 +9,9 @@ const createBlog = async (req: Request, res: Response): Promise<Response> => {
     try {
         const blog: Blog = await Blog.create(req.body);
 
-        return sendResponse(res, blog, `Blog ${blog.id} created.`, 201);
+        return responseHandler(res, blog, `Blog ${blog.id} created.`, 201);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -27,9 +27,9 @@ const getBlog = async (req: Request, res: Response): Promise<Response> => {
         blog.view_count += 1;
         await blog.save();
 
-        return sendResponse(res, blog, `Blog ${blog.id} gotten.`, 200);
+        return responseHandler(res, blog, `Blog ${blog.id} gotten.`, 200);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -37,9 +37,9 @@ const getAllBlogs = async (req: Request, res: Response): Promise<Response> => {
     try {
         const blogs: Blog[] = await Blog.find();
 
-        return sendResponse(res, blogs, `All blogs gotten.`, 200);
+        return responseHandler(res, blogs, `All blogs gotten.`, 200);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -52,9 +52,9 @@ const updateBlog = async (req: Request, res: Response): Promise<Response> => {
             throw new CustomError(`Blog ${req.params.id} not found.`, CustomError.NOT_FOUND);
         }
 
-        return sendResponse(res, blog, `Blog ${blog.id} updated.`, 201);
+        return responseHandler(res, blog, `Blog ${blog.id} updated.`, 201);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -67,9 +67,9 @@ const deleteBlog = async (req: Request, res: Response): Promise<Response> => {
             throw new CustomError(`Blog ${req.params.id} not found.`, CustomError.NOT_FOUND);
         }
 
-        return sendResponse(res, blog, `Blog ${blog.id} deleted.`, 201);
+        return responseHandler(res, blog, `Blog ${blog.id} deleted.`, 201);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -105,9 +105,9 @@ const likeBlog = async (req: AuthenticatedRequest, res: Response): Promise<Respo
                 is_liked: true
             }, {new: true});
 
-        return sendResponse(res, updatedBlog, `Blog ${blog.id} liked by ${req.user?.first_name}.`, 201);
+        return responseHandler(res, updatedBlog, `Blog ${blog.id} liked by ${req.user?.first_name}.`, 201);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -143,9 +143,9 @@ const dislikeBlog = async (req: AuthenticatedRequest, res: Response): Promise<Re
                 is_disliked: true
             }, {new: true});
 
-        return sendResponse(res, updatedBlog, `Blog ${blog.id} disliked by ${req.user?.first_name}.`, 201);
+        return responseHandler(res, updatedBlog, `Blog ${blog.id} disliked by ${req.user?.first_name}.`, 201);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 

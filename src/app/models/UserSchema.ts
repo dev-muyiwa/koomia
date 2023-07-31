@@ -16,6 +16,10 @@ interface User extends Document {
     is_blocked: boolean;
     password: string;
     address: Types.ObjectId[];
+    verification_status: {
+        mobile: boolean,
+        email: boolean
+    };
     refresh_token?: string;
     password_updated_at: string;
     password_reset_token?: string;
@@ -61,6 +65,16 @@ let userSchema: Schema<User> = new Schema({
         type: Types.ObjectId,
         ref: "Address"
     }],
+    verification_status: {
+        mobile: {
+            type: Boolean,
+            default: false
+        },
+        email: {
+            type: Boolean,
+            default: false
+        }
+    },
     refresh_token: {
         type: String,
         default: null

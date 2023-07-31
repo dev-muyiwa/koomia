@@ -1,5 +1,5 @@
 import {Request, Response} from "express";
-import {CustomError, handleResponseErrors, sendResponse} from "../../utils/responseResult";
+import {CustomError, errorHandler, responseHandler} from "../../utils/responseResult";
 import {validateDbId} from "../../utils/dbValidation";
 import Category, {CategoryType} from "../models/CategorySchema";
 
@@ -12,9 +12,9 @@ const createCategory = async (req: Request, res: Response): Promise<Response> =>
             title: req.body.title,
             category: req.body.category
         });
-        return sendResponse(res, category, `Category ${category.title} created.`, 201);
+        return responseHandler(res, category, `Category ${category.title} created.`, 201);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -22,9 +22,9 @@ const getAllCategories = async (req: Request, res: Response): Promise<Response> 
     try {
         const categories: Category[] = await Category.find({category: req.body.category});
 
-        return sendResponse(res, categories, "All categories gotten.");
+        return responseHandler(res, categories, "All categories gotten.");
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -36,9 +36,9 @@ const getCategory = async (req: Request, res: Response): Promise<Response> => {
         if (!category) {
             throw new CustomError("Category not found.", CustomError.NOT_FOUND);
         }
-        return sendResponse(res, category, `Category ${category.title} gotten.`);
+        return responseHandler(res, category, `Category ${category.title} gotten.`);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -52,9 +52,9 @@ const updateCategory = async (req: Request, res: Response): Promise<Response> =>
         if (!category) {
             throw new CustomError("Category not found.", CustomError.NOT_FOUND);
         }
-        return sendResponse(res, category, `Category ${category.title} updated.`, 201);
+        return responseHandler(res, category, `Category ${category.title} updated.`, 201);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -66,9 +66,9 @@ const deleteCategory = async (req: Request, res: Response): Promise<Response> =>
         if (!category) {
             throw new CustomError("Category not found.", CustomError.NOT_FOUND);
         }
-        return sendResponse(res, null, ` Category ${category.title} deleted.`);
+        return responseHandler(res, null, ` Category ${category.title} deleted.`);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 

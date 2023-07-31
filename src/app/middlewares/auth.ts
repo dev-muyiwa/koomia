@@ -3,7 +3,7 @@ import {NextFunction, Request, Response} from "express";
 import * as process from "process";
 import User, {Role} from "../models/UserSchema";
 import multer, {Multer} from "multer";
-import {CustomError, handleResponseErrors} from "../../utils/responseResult";
+import {CustomError, errorHandler} from "../../utils/responseResult";
 import {validateDbId} from "../../utils/dbValidation";
 
 
@@ -33,7 +33,7 @@ export const validateBearerToken = async (req: AuthenticatedRequest, res: Respon
         req.user = user;
         return next()
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -48,7 +48,7 @@ export const verifyAdminRole = async (req: AuthenticatedRequest, res: Response, 
         }
         return next();
     } catch (err) {
-        return handleResponseErrors(res, err)
+        return errorHandler(res, err)
     }
 }
 

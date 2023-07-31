@@ -1,6 +1,6 @@
 import {Response} from "express";
 
-export const sendResponse = (res: Response, data: any | null = null, message: string, code: number = 200): Response => {
+export const responseHandler = (res: Response, data: any | null = null, message: string, code: number = 200): Response => {
     return res.status(code).json({success: true, data: data, message: message});
 }
 
@@ -8,7 +8,7 @@ const sendError = (res: Response, error: object | null = null, message: string, 
     return res.status(code).json({success: false, error: error, message: message});
 }
 
-export const handleResponseErrors = (res: Response, err: any) => {
+export const errorHandler = (res: Response, err: any) => {
     if (err instanceof CustomError) {
         return sendError(res, null, err.message, err.code)
     } else {

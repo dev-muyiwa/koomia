@@ -2,7 +2,7 @@ import {Request, Response} from "express";
 import User, {Role} from "../models/UserSchema";
 import {AuthenticatedRequest} from "../middlewares/auth";
 import {validateDbId} from "../../utils/dbValidation";
-import {CustomError, handleResponseErrors, sendResponse} from "../../utils/responseResult";
+import {CustomError, errorHandler, responseHandler} from "../../utils/responseResult";
 import bcrypt from "bcrypt";
 import Wishlist from "../models/WishlistSchema";
 import Cart from "../models/CartSchema";
@@ -13,9 +13,9 @@ const getAllUsers = async (req: Request, res: Response): Promise<Response> => {
         const users: User[] = await User.where({role: Role.USER}).select("-password");
         const message: string = (users.length === 0) ? "No users found." : "All users returned.";
 
-        return sendResponse(res, users, message);
+        return responseHandler(res, users, message);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -25,9 +25,9 @@ const getUserProfile = async (req: AuthenticatedRequest, res: Response): Promise
         if (!user) {
             throw new CustomError("Profile not found.", CustomError.NOT_FOUND);
         }
-        return sendResponse(res, user, `Profile retrieved.`);
+        return responseHandler(res, user, `Profile retrieved.`);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -38,9 +38,9 @@ const getSingleUser = async (req: Request, res: Response): Promise<Response> => 
         if (!user) {
             throw new CustomError("User not found.", CustomError.NOT_FOUND);
         }
-        return sendResponse(res, user, `User retrieved.`);
+        return responseHandler(res, user, `User retrieved.`);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -52,9 +52,9 @@ const updateUser = async (req: AuthenticatedRequest, res: Response): Promise<Res
         if (!user) {
             throw new CustomError("User not found.", CustomError.NOT_FOUND);
         }
-        return sendResponse(res, user, `User details updated.`);
+        return responseHandler(res, user, `User details updated.`);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -73,9 +73,9 @@ const updatePassword = async (req: AuthenticatedRequest, res: Response): Promise
             user.password_updated_at = date.toISOString()
             await user.save();
         }
-        return sendResponse(res, user, `Password updated.`);
+        return responseHandler(res, user, `Password updated.`);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -88,9 +88,9 @@ const deleteUser = async (req: AuthenticatedRequest, res: Response): Promise<Res
             throw new CustomError("User not found.", CustomError.NOT_FOUND);
         }
         // Make sure to cascade delete.
-        return sendResponse(res, null, `Account deleted.`);
+        return responseHandler(res, null, `Account deleted.`);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -103,9 +103,9 @@ const blockUser = async (req: Request, res: Response): Promise<Response> => {
         if (!user) {
             throw new CustomError("User not found.", CustomError.NOT_FOUND);
         }
-        return sendResponse(res, null, `Account deactivated.`);
+        return responseHandler(res, null, `Account deactivated.`);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -117,9 +117,19 @@ const unblockUser = async (req: Request, res: Response): Promise<Response> => {
         if (!user) {
             throw new CustomError("User not found.", CustomError.NOT_FOUND);
         }
-        return sendResponse(res, null, `Account reactivated.`);
+        return responseHandler(res, null, `Account reactivated.`);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
+    }
+}
+
+const addAddress = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+    try {
+        const userId: string = req.user?.id;
+        const user: User = await
+
+    } catch (err) {
+        return errorHandler(res, err);
     }
 }
 
@@ -128,12 +138,12 @@ const getWishlist = async (req: AuthenticatedRequest, res: Response): Promise<Re
         const userId: string = req.user?.id;
         const wishlist: Wishlist|null = await Wishlist.findOne({user: userId});
         if (!wishlist) {
-            return sendResponse(res, null, "No item in wishlist");
+            return responseHandler(res, null, "No item in wishlist");
         }
 
-        return sendResponse(res, wishlist.products, "Wishlist gotten.");
+        return responseHandler(res, wishlist.products, "Wishlist gotten.");
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -143,9 +153,9 @@ const getAllWishlists = async (req: AuthenticatedRequest, res: Response): Promis
         const user: User = await User.findById(userId) as User;
         const wishlists: Wishlist = await Wishlist.findOne({user: user.id}) as Wishlist;
 
-        return sendResponse(res, wishlists.products, "All wishlists gotten.");
+        return responseHandler(res, wishlists.products, "All wishlists gotten.");
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -155,9 +165,9 @@ const getCart = async (req: AuthenticatedRequest, res: Response): Promise<Respon
         const user: User = await User.findById(userId) as User;
         const cart: Cart = await Cart.findOne({order_by: user.id}).select(["products", "total_price", "-_id"]) as Cart;
 
-        return sendResponse(res, cart, "User cart gotten.");
+        return responseHandler(res, cart, "User cart gotten.");
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 

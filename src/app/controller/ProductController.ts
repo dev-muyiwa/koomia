@@ -1,6 +1,6 @@
 import {Request, Response} from "express";
 import Product from "../models/ProductSchema";
-import {CustomError, handleResponseErrors, sendResponse} from "../../utils/responseResult";
+import {CustomError, errorHandler, responseHandler} from "../../utils/responseResult";
 import {validateDbId} from "../../utils/dbValidation";
 import slugify from "slugify";
 import {AuthenticatedRequest} from "../middlewares/auth";
@@ -30,9 +30,9 @@ const createProduct = async (req: Request, res: Response): Promise<Response> => 
         // console.log("Review is", review)
         await review.save();
 
-        return sendResponse(res, product, `${product.name} created.`, 201);
+        return responseHandler(res, product, `${product.name} created.`, 201);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -45,9 +45,9 @@ const getSingleProduct = async (req: Request, res: Response): Promise<Response> 
             throw new CustomError(`Product not found.`, CustomError.NOT_FOUND);
         }
 
-        return sendResponse(res, product, `${product.name} gotten.`);
+        return responseHandler(res, product, `${product.name} gotten.`);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -83,9 +83,9 @@ const getAllProducts = async (req: Request, res: Response): Promise<Response> =>
             if (skip >= productCount) throw new CustomError("Page not found.", CustomError.NOT_FOUND)
         }
 
-        return sendResponse(res, await productQuery, "Product(s) gotten.");
+        return responseHandler(res, await productQuery, "Product(s) gotten.");
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -102,9 +102,9 @@ const updateProduct = async (req: Request, res: Response): Promise<Response> => 
         }
         await product.save();
 
-        return sendResponse(res, product, `${product.name} updated.`);
+        return responseHandler(res, product, `${product.name} updated.`);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -118,9 +118,9 @@ const deleteProduct = async (req: Request, res: Response): Promise<Response> => 
             throw new CustomError(`Product not found.`, CustomError.NOT_FOUND);
         }
 
-        return sendResponse(res, null, `${product.name} deleted.`);
+        return responseHandler(res, null, `${product.name} deleted.`);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -149,9 +149,9 @@ const addOrDeleteFromWishlist = async (req: AuthenticatedRequest, res: Response)
         }
         await wishlist.save();
 
-        return sendResponse(res, null, message);
+        return responseHandler(res, null, message);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -165,9 +165,9 @@ const getAllReviews = async (req: Request, res: Response): Promise<Response> => 
             throw new CustomError(`Reviews not found.`, CustomError.NOT_FOUND);
         }
 
-        return sendResponse(res, reviews, `Reviews gotten.`);
+        return responseHandler(res, reviews, `Reviews gotten.`);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 const addReview = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
@@ -199,9 +199,9 @@ const addReview = async (req: AuthenticatedRequest, res: Response): Promise<Resp
         }
         await productReview.save();
 
-        return sendResponse(res, null, `Product reviewed.`, 201);
+        return responseHandler(res, null, `Product reviewed.`, 201);
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
@@ -215,9 +215,7 @@ const addOrRemoveFromCart = async (req: AuthenticatedRequest, res: Response): Pr
         if (!product){
             throw new CustomError("Product not found.", CustomError.NOT_FOUND);
         }
-        // console.log("Product", product)
         const userCart: Cart = await Cart.findOne({order_by: userId}) as Cart;
-        // console.log("Cart", userCart)
         const cartItem = await userCart.products
             .find((item) => item.product.toString() === productId)
 
@@ -232,9 +230,9 @@ const addOrRemoveFromCart = async (req: AuthenticatedRequest, res: Response): Pr
         }
         await userCart.save();
 
-        return sendResponse(res, null, "Cart updated.")
+        return responseHandler(res, null, "Cart updated.")
     } catch (err) {
-        return handleResponseErrors(res, err);
+        return errorHandler(res, err);
     }
 }
 
