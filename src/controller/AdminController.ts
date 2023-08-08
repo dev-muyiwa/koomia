@@ -4,8 +4,6 @@ import {UserDocument, UserModel} from "../models/User";
 import {Role} from "../models/enums/enum";
 import {validateMongooseId} from "../utils/helpers";
 import {CustomError} from "../utils/CustomError";
-import {CategoryDocument, CategoryModel} from "../models/Category";
-import {Types} from "mongoose";
 
 const getUsers = async (_req: Request, res: Response): Promise<Response> => {
     try {
@@ -71,82 +69,7 @@ const unblockUser = async (req: AuthenticatedRequest, res: Response): Promise<Re
     }
 }
 
-const createCategory = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
-    try {
-        const {name, parentId, type} = req.body;
-
-        const existingCategory: CategoryDocument | null = await CategoryModel.findOne({name: name});
-        if (existingCategory) {
-            throw new CustomError("Category exists.", CustomError.BAD_REQUEST);
-        }
-        const newCategoryId: Types.ObjectId = new Types.ObjectId();
-        if (parentId) {
-            validateMongooseId(parentId, "parent category");
-            const parentCategory = await CategoryModel.findById(parentId);
-            if (!parentCategory) {
-                throw new CustomError("Parent category does not exist.");
-            }
-            await parentCategory.updateOne({
-                $push: {subCategories: newCategoryId}
-            });
-        }
-
-        const category: CategoryDocument = await new CategoryModel({
-            _id: newCategoryId,
-            name: name,
-            type: type
-        }).save();
-
-        return sendSuccessResponse(res, category, "Category created.", 201);
-    } catch (err) {
-        return sendErrorResponse(res, err);
-    }
-}
-
-// const getCategory = async (req: AuthenticatedRequest, res: Response) => {
-//     const category = await CategoryModel.findById(req.params.categoryId).populate("subCategories");
-//
-//     return sendSuccessResponse(res, category, "Category fetched.");
-// }
-
-const updateCategory = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
-    try {
-        const {categoryId} = req.params;
-        const {name} = req.body;
-        validateMongooseId(categoryId, "category");
-        const category: CategoryDocument | null = await CategoryModel.findByIdAndUpdate(categoryId, {name: name}, {new: true});
-        if (!category) {
-            throw new CustomError("Category does not exist.");
-        }
-
-        return sendSuccessResponse(res, category, "Category updated.");
-    } catch (err) {
-        return sendErrorResponse(res, err);
-    }
-}
-
-const deleteCategory = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
-    try {
-        const {categoryId} = req.params;
-        validateMongooseId(categoryId, "category");
-
-        const category: CategoryDocument | null = await CategoryModel.findById(categoryId);
-        if (!category) {
-            throw new CustomError("Category does not exist.");
-        }
-
-        for (const sub of category.subCategories) {
-            await CategoryModel.findByIdAndDelete(sub);
-        }
-
-        await CategoryModel.findByIdAndDelete(categoryId);
-
-        return sendSuccessResponse(res, category, "Category deleted.");
-    } catch (err) {
-        return sendErrorResponse(res, err);
-    }
-}
 
 export {
-    getUsers, getUser, blockUser, unblockUser, createCategory, updateCategory, deleteCategory
+    getUsers, getUser, blockUser, unblockUser
 }

@@ -5,6 +5,7 @@ import authRouter from "../routes/AuthRoutes";
 import userRouter from "../routes/UserRoutes";
 import adminRouter from "../routes/AdminRoutes";
 import {apiErrorHandler, routeNotFound} from "../handlers/ErrorHandlers";
+import categoryRouter from "../routes/CategoryRoutes";
 
 
 const app: Application = express();
@@ -20,9 +21,9 @@ app.use(cookieParser());
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/categories", categoryRouter);
 // app.use("/api/products", productRoute);
 // app.use("/api/blogs", blogRoute);
-// app.use("/api/categories", categoryRoute);
 
 
 // Error handling.

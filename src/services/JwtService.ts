@@ -7,7 +7,7 @@ const generateAccessToken = (userId: string, email: string): string => {
         sub: userId,
         email: email.trim()
     }
-    return jwt.sign(payload, config.server.jwt_access_secret, {expiresIn: "15m"});
+    return jwt.sign(payload, config.server.jwt_access_secret, {expiresIn: "30m"});
 }
 
 

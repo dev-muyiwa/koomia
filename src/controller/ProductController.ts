@@ -2,22 +2,19 @@ import {Request, Response} from "express";
 import {validateMongooseId} from "../utils/helpers";
 import {CategoryDocument, CategoryModel} from "../models/Category";
 import {CustomError} from "../utils/CustomError";
-// import Product from "../models/ProductSchema";
-// import {CustomError, errorHandler, responseHandler} from "../utils/responseResult";
-// import {validateDbId} from "../utils/dbValidation";
-// import slugify from "slugify";
-// import {AuthenticatedRequest} from "../middlewares/auth";
-// import {Schema, Types} from "mongoose";
-// import {ImageResponse, uploadImages} from "../services/CloudinaryService";
-// import Wishlist from "../models/WishlistSchema";
-// import Review, {Rating} from "../models/ReviewSchema";
-// import CartModel from "../models/CartSchema";
-// import * as Mongoose from "mongoose";
-//
 
 const createProduct = async (req: Request, res: Response): Promise<Response> => {
     try {
+        const productImages = req.files;
         const {name, description, brand, categoryId, stockQty} = req.body;
+
+        if (!productImages || !productImages.length){
+            throw new CustomError("Upload the product image(s).", CustomError.BAD_REQUEST);
+        }
+
+        productImages.forEach(image => {
+
+        });
 
         validateMongooseId(categoryId, "category");
         const category: CategoryDocument|null = await CategoryModel.findById(categoryId);
