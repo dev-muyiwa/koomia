@@ -1,10 +1,9 @@
 import mongoose from "mongoose";
-import * as process from "process";
+import {config} from "./config";
 
-export const databaseConfig = () => {
+export const databaseSetup = async () => {
     try {
-        const conn = mongoose.connect(process.env.MONGODB_URL || "");
-        console.log("Database connection successful.")
+        await mongoose.connect(config.mongo.url, {maxPoolSize: 5});
     } catch (err) {
         throw new Error(err);
     }
