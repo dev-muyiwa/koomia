@@ -1,11 +1,15 @@
 import mongoose, {Document, Model, Schema, Types} from "mongoose";
-import {ImageResponse} from "./enums/enum";
 
 
 type ProductVariant = {
     color: string;
     size?: string;
     price: number;
+}
+
+type ImageResponse = Document & {
+    url: string,
+    publicId: string
 }
 
 type ProductDocument = Document & {

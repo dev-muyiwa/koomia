@@ -1,4 +1,4 @@
-import mongoose, {Model, Schema, Types} from "mongoose";
+import mongoose, {Model, Document, Schema, Types} from "mongoose";
 import {CategoryType} from "./enums/enum";
 
 
@@ -8,7 +8,7 @@ type CategoryDocument = Document & {
     type: string,
 }
 
-const CategorySchema: Schema<CategoryDocument> = new Schema({
+let CategorySchema: Schema<CategoryDocument> = new Schema({
     name: {
         type: String,
         trim: true,
@@ -26,6 +26,21 @@ const CategorySchema: Schema<CategoryDocument> = new Schema({
         enum: CategoryType
     }
 }, {versionKey: false});
+
+CategorySchema.pre('findOneAndDelete', async function () {
+    const categoryId = this.getQuery()['_id'];
+
+    const parentCategories: CategoryDocument[] = await mongoose.model<CategoryDocument>('Category')
+        .find({subCategories: categoryId});
+
+    await Promise.all(parentCategories.map(async (parentCategory) => {
+        parentCategory.subCategories = parentCategory.subCategories.filter(
+            (subcategoryId) => !subcategoryId.equals(categoryId)
+        );
+        await parentCategory.save();
+    }));
+});
+
 
 const CategoryModel: Model<CategoryDocument> = mongoose.model("Category", CategorySchema);
 export {

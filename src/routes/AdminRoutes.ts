@@ -3,7 +3,7 @@ import {checkAuthorizationToken, checkValidationErrors, verifyAdminRole} from ".
 import {
     blockUser,
     createCategory,
-    deleteCategory, getCategory,
+    deleteCategory,
     getUser,
     getUsers,
     unblockUser,
