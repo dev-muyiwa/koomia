@@ -29,13 +29,7 @@ type UserDocument = Document & {
 
     doesPasswordMatch(password: string): Promise<boolean>;
     createPasswordResetToken(): Promise<string>
-    getBasicInfo(): {
-        id: Schema.Types.ObjectId
-        firstName: string;
-        lastName: string;
-        email: string;
-        mobile: string;
-    };
+    getBasicInfo(): object;
 }
 
 

@@ -2,8 +2,9 @@ import mongoose, {Document, Model, Schema, Types} from "mongoose";
 
 
 type ProductVariant = {
-    color: string;
+    color?: string;
     size?: string;
+    stockQuantity: number;
     price: number;
 }
 
@@ -15,12 +16,13 @@ type ImageResponse = Document & {
 type ProductDocument = Document & {
     name: string;
     description: string;
-    brand: string;
+    brand: Types.ObjectId;
     category: Types.ObjectId;
-    stockQuantity: number;
     images: ImageResponse[];
     variants: ProductVariant[],
-    isNewArrival: boolean
+    isNewArrival?: boolean
+
+    getBasicInfo(): object;
 }
 
 const ProductSchema: Schema<ProductDocument> = new Schema<ProductDocument>({
@@ -34,29 +36,26 @@ const ProductSchema: Schema<ProductDocument> = new Schema<ProductDocument>({
         required: true
     },
     brand: {
-        type: String,
+        type: Schema.Types.ObjectId,
+        ref: "Category",
         required: true,
-        lowercase: true
     },
     category: {
         type: Schema.Types.ObjectId,
         ref: "Category",
         required: true,
     },
-    stockQuantity: {
-        type: Number,
-        required: true
-    },
     images: [{
         url: String,
         publicId: String
     }],
     variants: [{
-        color: {
-            type: String,
+        color: String,
+        size: String,
+        stockQuantity: {
+            type: Number,
             required: true
         },
-        size: String,
         price: {
             type: Number,
             required: true
@@ -68,9 +67,14 @@ const ProductSchema: Schema<ProductDocument> = new Schema<ProductDocument>({
     }
 }, {timestamps: true, versionKey: false});
 
-
 const ProductModel: Model<ProductDocument> = mongoose.model("Product", ProductSchema);
 
+ProductModel.prototype.getBasicInfo = function () {
+    const {id, name, images, variants} = this as ProductDocument;
+
+    return {id: id, name: name, image: images[0], price: variants[0].price};
+}
+
 export {
-    ProductModel, ProductDocument
+    ProductModel, ProductDocument, ImageResponse
 }

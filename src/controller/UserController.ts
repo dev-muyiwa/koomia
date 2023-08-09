@@ -63,7 +63,7 @@ const addAvatar = async (req: AuthenticatedRequest, res: Response): Promise<Resp
         const user: UserDocument = req.user as UserDocument;
 
         const uploadResponse: UploadApiResponse = await CloudinaryService.uploadMedia(avatar.path, {
-            public_id: `${user.id}/avatar/0`,
+            public_id: `koomia/users/${user.id}/avatar/0`,
             use_filename: true,
             resource_type: "image"
         });
