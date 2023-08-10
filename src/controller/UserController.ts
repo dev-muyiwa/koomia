@@ -8,6 +8,7 @@ import CloudinaryService from "../services/CloudinaryService";
 import {UploadApiResponse} from "cloudinary";
 import {WishlistDocument, WishlistModel} from "../models/WishlistSchema";
 import {ProductDocument} from "../models/Product";
+import {AddressDocument, AddressModel} from "../models/AddressBook";
 
 const getProfile = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
     try {
@@ -40,7 +41,7 @@ const updatePassword = async (req: AuthenticatedRequest, res: Response): Promise
         const user: UserDocument = req.user as UserDocument;
         const {oldPassword, newPassword} = req.body;
 
-        if (!await user.doesPasswordMatch(oldPassword)){
+        if (!await user.doesPasswordMatch(oldPassword)) {
             throw new CustomError("Old password does not match current password.", CustomError.BAD_REQUEST);
         }
 
@@ -100,17 +101,52 @@ const removeAvatar = async (req: AuthenticatedRequest, res: Response): Promise<R
     }
 }
 
-//
-// const addAddress = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
-//     try {
-//         const userId: string = req.user?.id;
-//         const user: UserModel = await
-//
-//     } catch (err) {
-//         return errorHandler(res, err);
-//     }
-// }
-//
+const addAddress = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+    try {
+        const user: UserDocument = req.user as UserDocument;
+        const {firstName, lastName, primaryMobile, secondaryMobile, address, moreInfo, region, city} = req.body;
+
+        const addressBook: AddressDocument = await new AddressModel({
+            firstName: firstName,
+            lastName: lastName,
+            primaryMobile: primaryMobile,
+            secondaryMobile: secondaryMobile ? secondaryMobile : null,
+            address: address,
+            moreInfo: moreInfo ? moreInfo : null,
+            region: region,
+            city: city,
+        }).save();
+
+        await user.updateOne({
+            $push: {addresses: addressBook.id}
+        });
+
+        return sendSuccessResponse(res, addressBook, "Address Book added.")
+    } catch (err) {
+        return sendErrorResponse(res, err);
+    }
+}
+
+const deleteAddress = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+    try {
+        const user: UserDocument = req.user as UserDocument;
+        const {addressId} = req.params;
+
+        const addressBook: AddressDocument|null = await AddressModel.findByIdAndDelete(addressId);
+        if (!addressBook) {
+            throw new CustomError("Address does not exist.");
+        }
+
+        await user.updateOne({
+            pull: {addresses: {_id: addressBook.id}}
+        });
+
+        return sendSuccessResponse(res, addressBook, "Address Book deleted.")
+    } catch (err) {
+        return sendErrorResponse(res, err);
+    }
+}
+
 const getWishlists = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
     try {
         const wishlist: WishlistDocument = await WishlistModel.findById(req.user!!.id).populate("products") as WishlistDocument;
@@ -130,5 +166,7 @@ export {
     updatePassword,
     addAvatar,
     removeAvatar,
-    getWishlists
+    getWishlists,
+    addAddress,
+    deleteAddress
 }

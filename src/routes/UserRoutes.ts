@@ -1,7 +1,8 @@
 import express, {Router} from "express";
 import {checkAuthorizationToken, checkValidationErrors, checkVerificationStatus} from "../middlewares/auth";
 import {
-    addAvatar,
+    addAddress,
+    addAvatar, deleteAddress,
     getProfile,
     getWishlists,
     removeAvatar,
@@ -43,4 +44,19 @@ userRouter.route("/me/avatar")
     .delete(removeAvatar);
 
 userRouter.get("/me/wishlists", getWishlists);
+
+userRouter.post("/me/addresses", [
+    check("firstName").escape().notEmpty().isLength({max: 15}).withMessage("First name cannot be more than 15 characters."),
+    check("lastName").escape().notEmpty().isLength({max: 15}).withMessage("Last name cannot be more than 15 characters."),
+    check("primaryMobile").escape().isMobilePhone("any").withMessage("Invalid mobile."),
+    check('address').escape().notEmpty().withMessage("Address cannot be empty."),
+    check("region").escape().notEmpty().withMessage("Region cannot be empty."),
+    check("city").escape().notEmpty().withMessage("City cannot be empty.")
+], checkValidationErrors, addAddress);
+
+userRouter.delete("/me/addresses/:addressId",
+    check("productId")
+        .isMongoId()
+        .withMessage("Invalid product ID."),
+    checkValidationErrors, deleteAddress);
 export default userRouter;
