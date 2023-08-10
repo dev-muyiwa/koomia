@@ -1,6 +1,13 @@
 import express, {Router} from "express";
 import {checkAuthorizationToken, checkValidationErrors, checkVerificationStatus} from "../middlewares/auth";
-import {addAvatar, getProfile, removeAvatar, updatePassword, updateProfile} from "../controller/UserController";
+import {
+    addAvatar,
+    getProfile,
+    getWishlists,
+    removeAvatar,
+    updatePassword,
+    updateProfile
+} from "../controller/UserController";
 import {check} from "express-validator";
 import {CustomError} from "../utils/CustomError";
 import {uploads} from "../services/CloudinaryService";
@@ -35,4 +42,5 @@ userRouter.route("/me/avatar")
     .put(uploads.single("avatar"), addAvatar)
     .delete(removeAvatar);
 
+userRouter.get("/me/wishlists", getWishlists);
 export default userRouter;

@@ -6,6 +6,8 @@ import {config} from "../config/config";
 import {CustomError} from "../utils/CustomError";
 import CloudinaryService from "../services/CloudinaryService";
 import {UploadApiResponse} from "cloudinary";
+import {WishlistDocument, WishlistModel} from "../models/WishlistSchema";
+import {ProductDocument} from "../models/Product";
 
 const getProfile = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
     try {
@@ -109,48 +111,24 @@ const removeAvatar = async (req: AuthenticatedRequest, res: Response): Promise<R
 //     }
 // }
 //
-// const getWishlist = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
-//     try {
-//         const userId: string = req.user?.id;
-//         const wishlist: Wishlist|null = await Wishlist.findOne({_id: userId});
-//         if (!wishlist) {
-//             return responseHandler(res, null, "No item in wishlist");
-//         }
-//
-//         return responseHandler(res, wishlist.products, "Wishlist gotten.");
-//     } catch (err) {
-//         return errorHandler(res, err);
-//     }
-// }
-//
-// const getAllWishlists = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
-//     try {
-//         const userId: string = req.user?.id;
-//         const user: UserModel = await UserModel.findById(userId) as UserModel;
-//         const wishlists: Wishlist = await Wishlist.findOne({_id: user.id}) as Wishlist;
-//
-//         return responseHandler(res, wishlists.products, "All wishlists gotten.");
-//     } catch (err) {
-//         return errorHandler(res, err);
-//     }
-// }
-//
-// const getCart = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
-//     try {
-//         const userId: string = req.user?.id;
-//         const user: UserModel = await UserModel.findById(userId) as UserModel;
-//         const cart: CartModel = await CartModel.findOne({order_by: user.id}).select(["products", "total_price", "-_id"]) as CartModel;
-//
-//         return responseHandler(res, cart, "User cart gotten.");
-//     } catch (err) {
-//         return errorHandler(res, err);
-//     }
-// }
-//
+const getWishlists = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+    try {
+        const wishlist: WishlistDocument = await WishlistModel.findById(req.user!!.id).populate("products") as WishlistDocument;
+
+        // @ts-ignore
+        const data = wishlist.products.map((product: ProductDocument) => product.getBasicInfo());
+
+        return sendSuccessResponse(res, data, "Your wishlists fetched.");
+    } catch (err) {
+        return sendErrorResponse(res, err);
+    }
+}
+
 export {
     getProfile,
     updateProfile,
     updatePassword,
     addAvatar,
     removeAvatar,
+    getWishlists
 }

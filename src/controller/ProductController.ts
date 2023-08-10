@@ -1,12 +1,14 @@
 import {Express, Request, Response} from "express";
 import {CategoryDocument, CategoryModel} from "../models/Category";
 import {CustomError} from "../utils/CustomError";
-import {CategoryType} from "../models/enums/enum";
-import {sendErrorResponse, sendSuccessResponse} from "../handlers/ResponseHandlers";
+import {CategoryType, VariantType} from "../models/enums/enum";
+import {AuthenticatedRequest, sendErrorResponse, sendSuccessResponse} from "../handlers/ResponseHandlers";
 import CloudinaryService from "../services/CloudinaryService";
 import {UploadApiResponse} from "cloudinary";
 import {ImageResponse, ProductDocument, ProductModel} from "../models/Product";
 import {validateMongooseId} from "../utils/helpers";
+import {UserDocument} from "../models/User";
+import {WishlistDocument, WishlistModel} from "../models/WishlistSchema";
 
 const createProduct = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -36,12 +38,22 @@ const createProduct = async (req: Request, res: Response): Promise<Response> => 
             throw new CustomError("Brand does not exist.");
         }
 
+        let type: VariantType;
+        if (variantsJson[0].color) {
+            type = VariantType.COLOR
+        } else if (variantsJson[0].size) {
+            type = VariantType.SIZE
+        } else {
+            throw new CustomError("You may select only size or color, neither both nor none.", CustomError.BAD_REQUEST);
+        }
+
         const product: ProductDocument = new ProductModel({
             name: name,
             description: description,
             brand: brand.id,
             category: category.id,
             variants: variantsJson,
+            variantType: type
         });
 
         let counter: number = 0;
@@ -102,10 +114,157 @@ const getProduct = async (req: Request, res: Response): Promise<Response> => {
     }
 }
 
+const updateProduct = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const {productId} = req.params;
+        const {name, description} = req.body;
+
+        const product: ProductDocument | null = await ProductModel.findById(productId);
+        if (!product) {
+            throw new CustomError("Product does not exist.");
+        }
+
+        await product.set({
+            name: name ? name : product.name,
+            description: description ? description : product.description
+        }).save();
+
+        return sendSuccessResponse(res, product, "Product updated.");
+    } catch (err) {
+        return sendErrorResponse(res, err);
+    }
+}
+
+const addProductVariant = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const {productId} = req.params;
+        const {color, size, stockQuantity, price} = req.body;
+
+        const product: ProductDocument | null = await ProductModel.findById(productId);
+        if (!product) {
+            throw new CustomError("Product does not exist.");
+        }
+
+        if (product.variantType === VariantType.COLOR) {
+            if (!color) {
+                throw new CustomError("Color field is required for this product.", CustomError.BAD_REQUEST);
+            }
+
+            product.variants.push({
+                color: color,
+                stockQuantity: stockQuantity,
+                price: price
+            });
+        } else if (product.variantType === VariantType.SIZE) {
+            if (!size) {
+                throw new CustomError("Size field is required for this product.", CustomError.BAD_REQUEST);
+            }
+            product.variants.push({
+                size: size,
+                stockQuantity: stockQuantity,
+                price: price
+            });
+        } else {
+            product.variants.push({
+                stockQuantity: stockQuantity,
+                price: price
+            });
+        }
+
+        await product.save()
+
+        return sendSuccessResponse(res, product, "Variant deleted.");
+    } catch (err) {
+        return sendErrorResponse(res, err);
+    }
+}
+
+const deleteProductVariant = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const {productId, variantId} = req.params;
+
+        const product: ProductDocument | null = await ProductModel.findById(productId);
+        if (!product) {
+            throw new CustomError("Product does not exist.");
+        }
+
+        await product.updateOne({
+            $pull: {
+                variants: {_id: variantId}
+            }
+        });
+
+        return sendSuccessResponse(res, null, "Variant deleted.");
+    } catch (err) {
+        return sendErrorResponse(res, err);
+    }
+}
+
+const deleteProduct = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const {productId} = req.params;
+
+        const product: ProductDocument | null = await ProductModel.findByIdAndDelete(productId);
+        if (!product) {
+            throw new CustomError("Product does not exist.");
+        }
+
+        return sendSuccessResponse(res, productId, "Product deleted.");
+    } catch (err) {
+        return sendErrorResponse(res, err);
+    }
+}
+
+const addToWishlist = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+    try {
+        const {productId} = req.params;
+        const product: ProductDocument|null = await ProductModel.findById(productId);
+        if (!product){
+            throw new CustomError("Product does not exist.");
+        }
+
+        const wishlist: WishlistDocument = await WishlistModel.findById(req.user!!.id) as WishlistDocument;
+
+        await wishlist.updateOne({
+            $push: {products: product.id}
+        })
+
+        return sendSuccessResponse(res, null, "Added to wishlists.");
+    } catch (err) {
+        return sendErrorResponse(res, err);
+    }
+}
+
+const removeFromWishlist = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+    try {
+        const {productId} = req.params;
+        const product: ProductDocument|null = await ProductModel.findById(productId);
+        if (!product){
+            throw new CustomError("Product does not exist.");
+        }
+
+        const wishlist: WishlistDocument = await WishlistModel.findById(req.user!!.id) as WishlistDocument;
+
+        await wishlist.updateOne({
+            $pull: {products: product.id}
+        })
+
+        return sendSuccessResponse(res, null, "Removed from wishlists.");
+    } catch (err) {
+        return sendErrorResponse(res, err);
+    }
+}
+
 export {
     createProduct,
     getProducts,
-    getProduct
+    getProduct,
+    updateProduct,
+    addProductVariant,
+    deleteProductVariant,
+    deleteProduct,
+    addToWishlist,
+    removeFromWishlist
 //     getSingleProduct,
 //     getAllProducts,
 //     updateProduct,

@@ -1,4 +1,5 @@
 import mongoose, {Document, Model, Schema, Types} from "mongoose";
+import {VariantType} from "./enums/enum";
 
 
 type ProductVariant = {
@@ -19,6 +20,7 @@ type ProductDocument = Document & {
     brand: Types.ObjectId;
     category: Types.ObjectId;
     images: ImageResponse[];
+    variantType?: string
     variants: ProductVariant[],
     isNewArrival?: boolean
 
@@ -49,6 +51,11 @@ const ProductSchema: Schema<ProductDocument> = new Schema<ProductDocument>({
         url: String,
         publicId: String
     }],
+    variantType:{
+        type: String,
+        enum: VariantType,
+        default: null
+    },
     variants: [{
         color: String,
         size: String,

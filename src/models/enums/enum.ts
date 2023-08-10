@@ -10,7 +10,12 @@ enum CategoryType {
     BRAND = "brand"
 }
 
+enum VariantType{
+    COLOR = "color",
+    SIZE = "size"
+}
+
 
 export {
-    Role, CategoryType
+    Role, CategoryType, VariantType
 }
