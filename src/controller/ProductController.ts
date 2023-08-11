@@ -7,7 +7,7 @@ import CloudinaryService from "../services/CloudinaryService";
 import {UploadApiResponse} from "cloudinary";
 import {ImageResponse, ProductDocument, ProductModel, ProductVariant} from "../models/Product";
 import {validateMongooseId} from "../utils/helpers";
-import {WishlistDocument, WishlistModel} from "../models/WishlistSchema";
+import {WishlistDocument, WishlistModel} from "../models/Wishlist";
 import {CartDocument, CartItem, CartModel} from "../models/Cart";
 import {UserDocument} from "../models/User";
 
@@ -323,5 +323,4 @@ export {
     removeFromCart
 //     getAllReviews,
 //     addReview,
-//     addOrRemoveFromCart
 }

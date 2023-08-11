@@ -3,7 +3,7 @@ import {JwtPayload} from "jsonwebtoken";
 import otpGenerator from "otp-generator";
 import {token} from "morgan";
 import bcrypt from "bcrypt";
-import {WishlistModel} from "../models/WishlistSchema";
+import {WishlistModel} from "../models/Wishlist";
 import {CartModel} from "../models/Cart";
 import {UserDocument, UserModel} from "../models/User";
 import {CustomError} from "../utils/CustomError";

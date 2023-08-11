@@ -64,7 +64,7 @@ productRouter.post("/", verifyAdminRole, [
     check('name').trim().notEmpty().withMessage("Product name cannot be empty."),
     check('description').trim().notEmpty().withMessage("Product description cannot be empty."),
     check('brandId').trim().notEmpty().isMongoId().withMessage("Invalid brand ID."),
-    check('variants').isJSON().custom((value, {req}) => {
+    check('variants').isJSON().custom((value) => {
         const variants = JSON.parse(value);
 
         if (!Array.isArray(variants)) {
@@ -72,7 +72,7 @@ productRouter.post("/", verifyAdminRole, [
         }
 
         variants.forEach((variant) => {
-            const {color, size, stockQuantity, price} = variant;
+            const {stockQuantity, price} = variant;
             if (!price || !stockQuantity || typeof price !== 'number' || typeof stockQuantity !== 'number') {
                 throw new Error('Invalid variant data.');
             }

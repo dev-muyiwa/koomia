@@ -38,27 +38,23 @@ let CartSchema: Schema<CartDocument> = new Schema<CartDocument>({
 }, {timestamps: true, versionKey: false});
 
 CartSchema.post<CartDocument>(["save", "findOneAndUpdate"], async function (doc: CartDocument) {
-    try {
-        let totalPrice: number = 0;
+    let totalPrice: number = 0;
 
-        await doc.populate("items");
+    await doc.populate("items");
 
-        for (const item of doc.items) {
+    for (const item of doc.items) {
 
-            const product: ProductDocument | null = await ProductModel.findById(item.product);
-            const variant: ProductVariant | undefined = product?.variants.find(v => v._id.equals(item.variant));
+        const product: ProductDocument | null = await ProductModel.findById(item.product);
+        const variant: ProductVariant | undefined = product?.variants.find(v => v._id.equals(item.variant));
 
-            if (variant && variant.stockQuantity >= item.quantity) {
-                totalPrice += variant.price * item.quantity;
-            }
+        if (variant && variant.stockQuantity >= item.quantity) {
+            totalPrice += variant.price * item.quantity;
         }
+    }
 
-        if (totalPrice !== doc.total) {
-            doc.total = totalPrice;
-            await doc.save(); // Update the document with the calculated total
-        }
-    } catch (error) {
-        console.error('Error calculating total price:', error);
+    if (totalPrice !== doc.total) {
+        doc.total = totalPrice;
+        await doc.save();
     }
 });
 

@@ -6,9 +6,13 @@ import {config} from "../config/config";
 import {CustomError} from "../utils/CustomError";
 import CloudinaryService from "../services/CloudinaryService";
 import {UploadApiResponse} from "cloudinary";
-import {WishlistDocument, WishlistModel} from "../models/WishlistSchema";
+import {WishlistDocument, WishlistModel} from "../models/Wishlist";
 import {ProductDocument} from "../models/Product";
 import {AddressDocument, AddressModel} from "../models/AddressBook";
+import {CartDocument, CartItem, CartModel} from "../models/Cart";
+import {OrderDocument, OrderModel} from "../models/Order";
+import {OrderStatus} from "../models/enums/enum";
+import {Types} from "mongoose";
 
 const getProfile = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
     try {
@@ -185,6 +189,28 @@ const getWishlists = async (req: AuthenticatedRequest, res: Response): Promise<R
 
         return sendSuccessResponse(res, data, "Your wishlists fetched.");
     } catch (err) {
+        return sendErrorResponse(res, err);
+    }
+}
+
+const checkoutCart = async(req: AuthenticatedRequest, res: Response): Promise<Response> => {
+    try {
+        const {addressId} = req.body
+        const user: UserDocument = req.user as UserDocument;
+        const cart: CartDocument = await CartModel.findOne({user: user.id}).populate(["product"]) as CartDocument;
+
+        const address: AddressDocument|null = await AddressModel.findOne({_id: addressId, user: user.id});
+        if (!address){
+            throw new CustomError("Address does not exist.");
+        }
+
+        const newOrder: OrderDocument = new OrderModel({
+            user: user.id,
+            status: OrderStatus.PENDING,
+            address: address.id,
+            items: cart.items
+        });
+    } catch (err){
         return sendErrorResponse(res, err);
     }
 }
