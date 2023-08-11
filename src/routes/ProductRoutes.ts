@@ -6,39 +6,54 @@ import {
     verifyAdminRole
 } from "../middlewares/auth";
 import {
-    addProductVariant, addToWishlist,
+    addProductVariant, upsertToCart, addToWishlist,
     createProduct,
     deleteProduct, deleteProductVariant,
     getProduct,
-    getProducts, removeFromWishlist,
+    getProducts, removeFromCart, removeFromWishlist,
     updateProduct
 } from "../controller/ProductController";
 import {check} from "express-validator";
 import {uploads} from "../services/CloudinaryService";
 
 
+
 const productRouter: Router = express.Router();
 
-productRouter.get("/", getProducts)
-    .get("/:productId",
+// Middleware Routes.
+
+productRouter.use("/:productId", [
         check("productId")
             .isMongoId()
-            .withMessage("Invalid product ID."),
-        checkValidationErrors, getProduct);
+            .withMessage("Invalid product ID.")],
+    checkValidationErrors);
+
+productRouter.use("/:productId/cart/:variantId", [
+        check("variantId")
+            .isMongoId()
+            .withMessage("Invalid variant ID."),],
+    checkValidationErrors);
+
+productRouter.get("/", getProducts)
+    .get("/:productId", getProduct);
+
+
 
 //Authenticated routes.
 
 productRouter.use(checkAuthorizationToken, checkVerificationStatus);
 
 productRouter.route("/:productId/wishlists")
-    .put(check("productId")
-            .isMongoId()
-            .withMessage("Invalid product ID."),
-        checkValidationErrors, addToWishlist)
-    .delete(check("productId")
-            .isMongoId()
-            .withMessage("Invalid product ID."),
-        checkValidationErrors, removeFromWishlist);
+    .put(addToWishlist)
+    .delete(removeFromWishlist);
+
+
+productRouter.route("/:productId/cart/:variantId")
+    .post([check("quantity")
+            .isInt({min: 1})
+            .withMessage("Quantity is of type integer with a minimum of 1.")],
+        checkValidationErrors, upsertToCart)
+    .delete(removeFromCart);
 
 
 // Admin routes.
@@ -69,28 +84,11 @@ productRouter.post("/", verifyAdminRole, [
 ], checkValidationErrors, createProduct);
 
 productRouter.route("/:productId")
-    .put(check("productId")
-            .isMongoId()
-            .withMessage("Invalid product ID."),
-        checkValidationErrors, updateProduct)
-    .delete(check("productId")
-            .isMongoId()
-            .withMessage("Invalid product ID."),
-        checkValidationErrors, deleteProduct);
+    .put(updateProduct)
+    .delete(deleteProduct);
 
-productRouter.post("/:productId/variants",
-    check("productId")
-        .isMongoId()
-        .withMessage("Invalid product ID."),
-    checkValidationErrors, addProductVariant);
+productRouter.post("/:productId/variants", addProductVariant);
 
-productRouter.delete("/:productId/variants/:variantId",
-    check("productId")
-        .isMongoId()
-        .withMessage("Invalid product ID."),
-    check("variantId")
-        .isMongoId()
-        .withMessage("Invalid variant ID."),
-    checkValidationErrors, deleteProductVariant);
+productRouter.delete("/:productId/variants/:variantId", deleteProductVariant);
 
 export default productRouter;

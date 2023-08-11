@@ -5,10 +5,11 @@ import {CategoryType, VariantType} from "../models/enums/enum";
 import {AuthenticatedRequest, sendErrorResponse, sendSuccessResponse} from "../handlers/ResponseHandlers";
 import CloudinaryService from "../services/CloudinaryService";
 import {UploadApiResponse} from "cloudinary";
-import {ImageResponse, ProductDocument, ProductModel} from "../models/Product";
+import {ImageResponse, ProductDocument, ProductModel, ProductVariant} from "../models/Product";
 import {validateMongooseId} from "../utils/helpers";
-import {UserDocument} from "../models/User";
 import {WishlistDocument, WishlistModel} from "../models/WishlistSchema";
+import {CartDocument, CartItem, CartModel} from "../models/Cart";
+import {UserDocument} from "../models/User";
 
 const createProduct = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -154,7 +155,7 @@ const addProductVariant = async (req: Request, res: Response): Promise<Response>
                 color: color,
                 stockQuantity: stockQuantity,
                 price: price
-            });
+            } as ProductVariant);
         } else if (product.variantType === VariantType.SIZE) {
             if (!size) {
                 throw new CustomError("Size field is required for this product.", CustomError.BAD_REQUEST);
@@ -163,12 +164,12 @@ const addProductVariant = async (req: Request, res: Response): Promise<Response>
                 size: size,
                 stockQuantity: stockQuantity,
                 price: price
-            });
+            } as ProductVariant);
         } else {
             product.variants.push({
                 stockQuantity: stockQuantity,
                 price: price
-            });
+            } as ProductVariant);
         }
 
         await product.save()
@@ -218,8 +219,8 @@ const deleteProduct = async (req: Request, res: Response): Promise<Response> => 
 const addToWishlist = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
     try {
         const {productId} = req.params;
-        const product: ProductDocument|null = await ProductModel.findById(productId);
-        if (!product){
+        const product: ProductDocument | null = await ProductModel.findById(productId);
+        if (!product) {
             throw new CustomError("Product does not exist.");
         }
 
@@ -238,8 +239,8 @@ const addToWishlist = async (req: AuthenticatedRequest, res: Response): Promise<
 const removeFromWishlist = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
     try {
         const {productId} = req.params;
-        const product: ProductDocument|null = await ProductModel.findById(productId);
-        if (!product){
+        const product: ProductDocument | null = await ProductModel.findById(productId);
+        if (!product) {
             throw new CustomError("Product does not exist.");
         }
 
@@ -255,6 +256,59 @@ const removeFromWishlist = async (req: AuthenticatedRequest, res: Response): Pro
     }
 }
 
+const upsertToCart = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+    try {
+        const {productId, variantId} = req.params;
+        const {quantity} = req.body;
+
+        const user: UserDocument = req.user as UserDocument;
+
+        const product: ProductDocument | null = await ProductModel.findById(productId);
+        if (!product) {
+            throw new CustomError("Product does not exist.");
+        }
+
+        const variant: ProductVariant | undefined = product.variants.find(variant => variant._id.equals(variantId));
+        if (!variant) {
+            throw new CustomError("Variant does not exist for this product.");
+        }
+
+        const cart: CartDocument = await CartModel.findOne({user: user.id}) as CartDocument;
+        const cartVariant = cart.items.find(item => item.variant.equals(variant.id));
+        if (cartVariant) {
+            cartVariant.quantity = quantity;
+            await cart.save()
+        } else {
+            cart.items.push({
+                product: product.id,
+                variant: variant.id,
+                quantity: quantity
+            } as CartItem)
+            await cart.save()
+        }
+
+        return sendSuccessResponse(res, cart, "Product added to cart.");
+    } catch (err) {
+        return sendErrorResponse(res, err);
+    }
+}
+
+const removeFromCart = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+    try {
+        const {productId, variantId} = req.params;
+
+        const userCart: CartDocument | null = await CartModel.findOneAndUpdate({user: req.user!!.id}, {
+            $pull: {
+                items: {product: productId, variant: variantId}
+            }
+        }, {new: true});
+
+        return sendSuccessResponse(res, userCart, "Product removed from cart.");
+    } catch (err) {
+        return sendErrorResponse(res, err);
+    }
+}
+
 export {
     createProduct,
     getProducts,
@@ -264,12 +318,9 @@ export {
     deleteProductVariant,
     deleteProduct,
     addToWishlist,
-    removeFromWishlist
-//     getSingleProduct,
-//     getAllProducts,
-//     updateProduct,
-//     deleteProduct,
-//     addOrDeleteFromWishlist,
+    removeFromWishlist,
+    upsertToCart,
+    removeFromCart
 //     getAllReviews,
 //     addReview,
 //     addOrRemoveFromCart

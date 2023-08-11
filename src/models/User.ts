@@ -18,7 +18,6 @@ type UserDocument = Document & {
     role: string;
     isBlocked: boolean;
     password: string;
-    addresses: Types.ObjectId[];
     isVerified: boolean;
     otp?: {
         code: string,
@@ -77,10 +76,6 @@ let UserSchema: Schema<UserDocument> = new Schema({
         type: String,
         required: true
     },
-    addresses: [{
-        type: Types.ObjectId,
-        ref: "Address"
-    }],
     isVerified: {
         type: Boolean,
         default: false

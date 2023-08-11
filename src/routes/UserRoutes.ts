@@ -5,7 +5,7 @@ import {
     addAvatar, deleteAddress,
     getProfile,
     getWishlists,
-    removeAvatar,
+    removeAvatar, updateAddress,
     updatePassword,
     updateProfile
 } from "../controller/UserController";
@@ -54,9 +54,19 @@ userRouter.post("/me/addresses", [
     check("city").escape().notEmpty().withMessage("City cannot be empty.")
 ], checkValidationErrors, addAddress);
 
-userRouter.delete("/me/addresses/:addressId",
-    check("productId")
-        .isMongoId()
-        .withMessage("Invalid product ID."),
-    checkValidationErrors, deleteAddress);
+userRouter.route("/me/addresses/:addressId")
+    .put(check("addressId")
+            .isMongoId()
+            .withMessage("Invalid address ID."),
+        check("firstName").escape().notEmpty().isLength({max: 15}).withMessage("First name cannot be more than 15 characters."),
+        check("lastName").escape().notEmpty().isLength({max: 15}).withMessage("Last name cannot be more than 15 characters."),
+        check("primaryMobile").escape().isMobilePhone("any").withMessage("Invalid mobile."),
+        check('address').escape().notEmpty().withMessage("Address cannot be empty."),
+        check("region").escape().notEmpty().withMessage("Region cannot be empty."),
+        check("city").escape().notEmpty().withMessage("City cannot be empty."),
+        checkValidationErrors, updateAddress)
+    .delete(check("addressId")
+            .isMongoId()
+            .withMessage("Invalid address ID."),
+        checkValidationErrors, deleteAddress);
 export default userRouter;

@@ -4,7 +4,7 @@ import otpGenerator from "otp-generator";
 import {token} from "morgan";
 import bcrypt from "bcrypt";
 import {WishlistModel} from "../models/WishlistSchema";
-import CartModel from "../models/CartSchema";
+import {CartModel} from "../models/Cart";
 import {UserDocument, UserModel} from "../models/User";
 import {CustomError} from "../utils/CustomError";
 import {AuthenticatedRequest, sendErrorResponse, sendSuccessResponse} from "../handlers/ResponseHandlers";
@@ -34,7 +34,7 @@ const signup = async (req: Request, res: Response): Promise<Response> => {
         }).save();
 
         await new WishlistModel({_id: user.id}).save();
-        await new CartModel({order_by: user.id}).save();
+        await new CartModel({user: user.id}).save();
 
         return sendSuccessResponse(res, user.getBasicInfo(), `Signup successful.`, 201);
     } catch (err) {

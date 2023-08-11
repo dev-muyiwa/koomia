@@ -2,7 +2,7 @@ import mongoose, {Document, Model, Schema, Types} from "mongoose";
 import {VariantType} from "./enums/enum";
 
 
-type ProductVariant = {
+type ProductVariant = Document & {
     color?: string;
     size?: string;
     stockQuantity: number;
@@ -83,5 +83,5 @@ ProductModel.prototype.getBasicInfo = function () {
 }
 
 export {
-    ProductModel, ProductDocument, ImageResponse
+    ProductModel, ProductDocument, ImageResponse, ProductVariant
 }

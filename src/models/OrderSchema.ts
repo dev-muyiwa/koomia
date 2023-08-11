@@ -1,5 +1,5 @@
 import {Schema, Types} from "mongoose";
-import CartModel from "./CartSchema";
+import CartModel from "./Cart";
 
 
 export enum OrderStatus {

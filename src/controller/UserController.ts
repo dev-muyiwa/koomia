@@ -107,6 +107,7 @@ const addAddress = async (req: AuthenticatedRequest, res: Response): Promise<Res
         const {firstName, lastName, primaryMobile, secondaryMobile, address, moreInfo, region, city} = req.body;
 
         const addressBook: AddressDocument = await new AddressModel({
+            user: user.id,
             firstName: firstName,
             lastName: lastName,
             primaryMobile: primaryMobile,
@@ -117,9 +118,6 @@ const addAddress = async (req: AuthenticatedRequest, res: Response): Promise<Res
             city: city,
         }).save();
 
-        await user.updateOne({
-            $push: {addresses: addressBook.id}
-        });
 
         return sendSuccessResponse(res, addressBook, "Address Book added.")
     } catch (err) {
@@ -127,21 +125,51 @@ const addAddress = async (req: AuthenticatedRequest, res: Response): Promise<Res
     }
 }
 
+const updateAddress = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+    try {
+        const user: UserDocument = req.user as UserDocument;
+        const {addressId} = req.params;
+        const {firstName, lastName, primaryMobile, secondaryMobile, address, moreInfo, region, city} = req.body;
+
+        const addressBook: AddressDocument | null = await AddressModel.findOneAndUpdate({
+            _id: addressId,
+            user: user.id
+        }, {
+            firstName: firstName,
+            lastName: lastName,
+            primaryMobile: primaryMobile,
+            secondaryMobile: secondaryMobile,
+            address: address,
+            moreInfo: moreInfo,
+            region: region,
+            city: city
+        }, {new: true});
+
+        if (!addressBook) {
+            throw new CustomError("Address book does not exist.")
+        }
+
+        return sendSuccessResponse(res, addressBook, "Address Book updated.")
+    } catch (err) {
+        return sendErrorResponse(res, err);
+    }
+}
+
+
 const deleteAddress = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
     try {
         const user: UserDocument = req.user as UserDocument;
         const {addressId} = req.params;
 
-        const addressBook: AddressDocument|null = await AddressModel.findByIdAndDelete(addressId);
+        const addressBook: AddressDocument | null = await AddressModel.findOneAndDelete({
+            _id: addressId,
+            user: user.id
+        });
         if (!addressBook) {
             throw new CustomError("Address does not exist.");
         }
 
-        await user.updateOne({
-            pull: {addresses: {_id: addressBook.id}}
-        });
-
-        return sendSuccessResponse(res, addressBook, "Address Book deleted.")
+        return sendSuccessResponse(res, null, "Address Book deleted.")
     } catch (err) {
         return sendErrorResponse(res, err);
     }
@@ -149,10 +177,11 @@ const deleteAddress = async (req: AuthenticatedRequest, res: Response): Promise<
 
 const getWishlists = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
     try {
-        const wishlist: WishlistDocument = await WishlistModel.findById(req.user!!.id).populate("products") as WishlistDocument;
+        const wishlist: WishlistDocument = await WishlistModel.findById(req.user!!.id)
+            .populate("products") as WishlistDocument;
 
         // @ts-ignore
-        const data = wishlist.products.map((product: ProductDocument) => product.getBasicInfo());
+        const data: Object[] = wishlist.products.map((product: ProductDocument) => product.getBasicInfo());
 
         return sendSuccessResponse(res, data, "Your wishlists fetched.");
     } catch (err) {
@@ -168,5 +197,6 @@ export {
     removeAvatar,
     getWishlists,
     addAddress,
+    updateAddress,
     deleteAddress
 }

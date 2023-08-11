@@ -1,6 +1,7 @@
 import mongoose, {Document, Model, Schema, Types} from "mongoose";
 
 type AddressDocument = Document & {
+    user: Types.ObjectId,
     firstName: string,
     lastName: string,
     primaryMobile: string,
@@ -13,6 +14,11 @@ type AddressDocument = Document & {
 }
 
 const AddressSchema: Schema<AddressDocument> = new Schema<AddressDocument>({
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    },
     firstName: {
         type: String,
         required: true
