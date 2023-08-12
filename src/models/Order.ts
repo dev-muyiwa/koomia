@@ -1,4 +1,4 @@
-import mongoose, {Model, Schema, Types} from "mongoose";
+import mongoose, {Model, Document, Schema, Types} from "mongoose";
 import {OrderStatus} from "./enums/enum";
 import {CartItem} from "./Cart";
 

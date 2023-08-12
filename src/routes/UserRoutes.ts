@@ -2,12 +2,12 @@ import express, {Router} from "express";
 import {checkAuthorizationToken, checkValidationErrors, checkVerificationStatus} from "../middlewares/auth";
 import {
     addAddress,
-    addAvatar, deleteAddress,
+    addAvatar, checkoutCart, deleteAddress,
     getProfile,
     getWishlists,
     removeAvatar, updateAddress,
     updatePassword,
-    updateProfile
+    updateProfile, verifyCheckout
 } from "../controller/UserController";
 import {check} from "express-validator";
 import {CustomError} from "../utils/CustomError";
@@ -69,4 +69,13 @@ userRouter.route("/me/addresses/:addressId")
             .isMongoId()
             .withMessage("Invalid address ID."),
         checkValidationErrors, deleteAddress);
+
+userRouter.post("/me/checkout", check("addressId")
+    .isMongoId()
+    .withMessage("Invalid address ID."), checkValidationErrors, checkoutCart)
+
+userRouter.get("/me/verify-checkout/:orderId",check("orderId")
+        .isMongoId()
+        .withMessage("Invalid address ID."),
+    checkValidationErrors, verifyCheckout);
 export default userRouter;

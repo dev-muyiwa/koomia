@@ -1,6 +1,6 @@
-import {Request, Response} from "express";
+import {Response} from "express";
 import bcrypt from "bcrypt";
-import {UserDocument, UserModel} from "../models/User";
+import {UserDocument} from "../models/User";
 import {AuthenticatedRequest, sendErrorResponse, sendSuccessResponse} from "../handlers/ResponseHandlers";
 import {config} from "../config/config";
 import {CustomError} from "../utils/CustomError";
@@ -9,10 +9,11 @@ import {UploadApiResponse} from "cloudinary";
 import {WishlistDocument, WishlistModel} from "../models/Wishlist";
 import {ProductDocument} from "../models/Product";
 import {AddressDocument, AddressModel} from "../models/AddressBook";
-import {CartDocument, CartItem, CartModel} from "../models/Cart";
+import {CartDocument, CartModel} from "../models/Cart";
 import {OrderDocument, OrderModel} from "../models/Order";
 import {OrderStatus} from "../models/enums/enum";
-import {Types} from "mongoose";
+import fetch from 'node-fetch';
+
 
 const getProfile = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
     try {
@@ -193,24 +194,78 @@ const getWishlists = async (req: AuthenticatedRequest, res: Response): Promise<R
     }
 }
 
-const checkoutCart = async(req: AuthenticatedRequest, res: Response): Promise<Response> => {
+const checkoutCart = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
     try {
         const {addressId} = req.body
         const user: UserDocument = req.user as UserDocument;
-        const cart: CartDocument = await CartModel.findOne({user: user.id}).populate(["product"]) as CartDocument;
+        const cart: CartDocument = await CartModel.findOne({user: user.id}) as CartDocument;
 
-        const address: AddressDocument|null = await AddressModel.findOne({_id: addressId, user: user.id});
-        if (!address){
+        const address: AddressDocument | null = await AddressModel.findOne({_id: addressId, user: user.id});
+        if (!address) {
             throw new CustomError("Address does not exist.");
         }
 
-        const newOrder: OrderDocument = new OrderModel({
+        const order: OrderDocument = await new OrderModel({
             user: user.id,
             status: OrderStatus.PENDING,
             address: address.id,
             items: cart.items
+        }).save();
+
+        const params: string = JSON.stringify({
+            "email": user.email,
+            "amount": cart.total * 100
+        })
+
+        const response = await fetch("https://api.paystack.co/transaction/initialize", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${config.payment_provider.paystack.secret_key}`
+            },
+            body: params
         });
-    } catch (err){
+
+        const jsonResponse = await response.json();
+
+        const data = {
+            authorizationUrl: jsonResponse.data.authorization_url,
+            orderId: order.id,
+            reference: jsonResponse.data.reference
+        }
+        return sendSuccessResponse(res, data, jsonResponse.message)
+    } catch (err) {
+        return sendErrorResponse(res, err);
+    }
+}
+
+const verifyCheckout = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+    try {
+        const {reference} = req.query;
+        const {orderId} = req.params;
+
+
+        const response = await fetch("https://api.paystack.co/transaction/verify/" + encodeURIComponent(reference as string), {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${config.payment_provider.paystack.secret_key}`
+            },
+        });
+
+        const jsonResponse = await response.json();
+
+        const order: OrderDocument = await OrderModel.findByIdAndUpdate(orderId) as OrderDocument;
+
+        if (jsonResponse.data.status !== "success") {
+            order.status = OrderStatus.CANCELLED;
+            await order.save();
+            throw new CustomError(jsonResponse.data.gateway_response, CustomError.BAD_REQUEST);
+        }
+        order.status = OrderStatus.PROCESSING;
+        await order.save();
+
+        return sendSuccessResponse(res, jsonResponse.data, jsonResponse.data.gateway_response);
+    } catch (err) {
         return sendErrorResponse(res, err);
     }
 }
@@ -224,5 +279,7 @@ export {
     getWishlists,
     addAddress,
     updateAddress,
-    deleteAddress
+    deleteAddress,
+    checkoutCart,
+    verifyCheckout
 }

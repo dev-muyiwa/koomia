@@ -39,6 +39,7 @@
     "@types/bcrypt": "^5.0.0",
     "@types/cookie-parser": "^1.4.3",
     "@types/morgan": "^1.9.4",
+    "@types/node-fetch": "^2.6.4",
     "@types/nodemailer": "^6.4.8",
     "mongoose": "^7.4.1"
   }
