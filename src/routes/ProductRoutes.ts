@@ -72,7 +72,7 @@ productRouter.post("/", verifyAdminRole, [
         }
 
         variants.forEach((variant) => {
-            const {stockQuantity, price} = variant;
+            const {color, size ,stockQuantity, price} = variant;
             if (!price || !stockQuantity || typeof price !== 'number' || typeof stockQuantity !== 'number') {
                 throw new Error('Invalid variant data.');
             }

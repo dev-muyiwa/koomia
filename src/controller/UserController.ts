@@ -160,7 +160,6 @@ const updateAddress = async (req: AuthenticatedRequest, res: Response): Promise<
     }
 }
 
-
 const deleteAddress = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
     try {
         const user: UserDocument = req.user as UserDocument;
